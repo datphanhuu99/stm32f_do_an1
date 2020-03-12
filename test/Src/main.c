@@ -72,10 +72,13 @@ uint16_t duty=0, fade=4;
 int data_motor=0;
 //----PID----
 //float error,flag,i,d,preError,ki=0.004,kp=1.2,kd=1,t=0;
-float error,flag,i,d,preError,ki=0.01,kp=0.2,kd=1,t=0;
+//float error,flag,i,d,preError,ki=0.01,kp=0.2,kd=1,t=0;
+//float error,flag,i,d,preError,ki=0.003,kp=1,kd=1,t=0;  // tam on
+float error,flag,i,d,preError,ki=0.01,kp=2.0,kd=1.0,t=0;
 float value=1,count_value, precount;
 	
-bool Usb_Write_float(float data_s[500], float data_duty[500], float data_count[500]);
+//bool Usb_Write_float(float data_s[500], float data_duty[500], float data_count[500]);
+bool Usb_Write_float();
 int gui(float data_s[100], float data_duty[100], float data_count[100]);
 
 /* USER CODE END PV */
@@ -201,7 +204,7 @@ int main(void)
 		
 		if(duty>=400)
 		{
-			duty=0;
+			duty=400;
 		}
 		HAL_Delay(50);
 
@@ -474,10 +477,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	{
 		
 		HAL_GPIO_TogglePin(GPIOG,GPIO_PIN_14);
-		if((precount<=count_value+4)&&(precount>=count_value-4))
-		{count_value=precount;
-		}
+//		if((precount<=count_value+4)&&(precount>=count_value-4))
+//		{count_value=precount;
+//		}
 		
+		float LPF_Beta=0.025;
+		
+		precount=precount-(LPF_Beta*(precount-count_value));
+		
+		count_value=precount;
 		
 		error = value*10-count_value/10;
 		duty=duty+error*1;
@@ -493,26 +501,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		d_motor[ds]=data_motor;
 		d_value[ds]=value;
 		data_count[ds]=count_value;
-		precount=count_value;
+//		precount=count_value;
 		ds++;
 		//xoa bien dem
 		count_value=0;
 	}
 	
-//	if(htim->Instance==htim2.Instance)
-//		{
-//			flag1++;
-//			HAL_GPIO_TogglePin(GPIOG,GPIO_PIN_13);
-//		}
-//		
-//	if(htim->Instance==htim5.Instance)
-//		{
-//			flag2++;
-//			HAL_GPIO_TogglePin(GPIOG,GPIO_PIN_13);
-//		}
 }
 
-bool Usb_Write_float(float data_s[500], float data_duty[500], float data_count[500])
+bool Usb_Write_float()
 {
 	
 	if(f_open(&myFile, "TEST2.txt", FA_WRITE| FA_CREATE_ALWAYS) !=FR_OK)
